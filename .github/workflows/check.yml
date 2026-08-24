@@ -49,6 +49,9 @@ jobs:
       - name: Export local Supabase env for build + e2e
         run: |
           supabase status -o env > /tmp/supabase-status.env
+          echo "::group::raw supabase status -o env output (debugging field names)"
+          cat /tmp/supabase-status.env
+          echo "::endgroup::"
           source /tmp/supabase-status.env
           {
             echo "SUPABASE_URL=$API_URL"
