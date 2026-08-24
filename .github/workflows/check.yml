@@ -48,15 +48,13 @@ jobs:
 
       - name: Export local Supabase env for build + e2e
         run: |
-          supabase status -o env > /tmp/supabase-status.env
-          echo "::group::raw supabase status -o env output (debugging field names)"
-          cat /tmp/supabase-status.env
+          echo "::group::raw supabase status -o json output (debugging field names)"
+          supabase status -o json | tee /tmp/supabase-status.json
           echo "::endgroup::"
-          source /tmp/supabase-status.env
           {
-            echo "SUPABASE_URL=$API_URL"
-            echo "SUPABASE_KEY=$ANON_KEY"
-            echo "SUPABASE_SERVICE_KEY=$SERVICE_ROLE_KEY"
+            echo "SUPABASE_URL=$(jq -r '.API_URL' /tmp/supabase-status.json)"
+            echo "SUPABASE_KEY=$(jq -r '.ANON_KEY' /tmp/supabase-status.json)"
+            echo "SUPABASE_SERVICE_KEY=$(jq -r '.SERVICE_ROLE_KEY' /tmp/supabase-status.json)"
           } >> "$GITHUB_ENV"
 
       - name: Build (proves the service-role key never lands in the client bundle)

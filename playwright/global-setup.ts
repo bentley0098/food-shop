@@ -2,9 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { chromium, type FullConfig } from '@playwright/test'
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
-import { createRequire } from 'node:module'
-
-const require = createRequire(import.meta.url)
+import { build } from 'esbuild'
 
 /**
  * Mints real, signed-in Supabase sessions for two test users against the
@@ -14,6 +12,15 @@ const require = createRequire(import.meta.url)
  */
 const LOCAL_SUPABASE_URL = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321'
 const LOCAL_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
+const LOCAL_ANON_KEY = process.env.SUPABASE_KEY ?? ''
+
+// @nuxtjs/supabase stores the session in a cookie, not localStorage
+// (`useSsrCookies: true` is the module default, so the server-rendered
+// request can read it too). The cookie name is derived from the URL —
+// this is the exact formula the module itself uses
+// (@nuxtjs/supabase/dist/module.mjs), reproduced here so the cookie we
+// write is the one the app actually reads.
+const AUTH_COOKIE_NAME = `sb-${new URL(LOCAL_SUPABASE_URL).hostname.split('.')[0]}-auth-token`
 
 const TEST_USERS = [
   { email: 'alice@test.local', password: 'test-password-alice', storageState: 'alice.json' },
@@ -35,6 +42,33 @@ export default async function globalSetup(_config: FullConfig) {
   const authDir = path.join(process.cwd(), 'playwright/.auth')
   mkdirSync(authDir, { recursive: true })
 
+  // Bundles @supabase/ssr's createBrowserClient for the browser so session
+  // injection goes through the exact same cookie-writing code path the app
+  // itself uses — no hand-guessing @supabase/ssr's cookie value encoding or
+  // chunking rules.
+  const bundle = await build({
+    stdin: {
+      contents: `
+        import { createBrowserClient } from '@supabase/ssr'
+        window.__setTestSession = async (url, anonKey, cookieName, session) => {
+          const client = createBrowserClient(url, anonKey, { cookieOptions: { name: cookieName } })
+          const { error } = await client.auth.setSession({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+          })
+          if (error) throw error
+        }
+      `,
+      resolveDir: process.cwd(),
+      loader: 'js',
+    },
+    bundle: true,
+    format: 'iife',
+    platform: 'browser',
+    write: false,
+  })
+  const sessionInjectorScript = bundle.outputFiles[0].text
+
   const browser = await chromium.launch()
 
   for (const user of TEST_USERS) {
@@ -50,7 +84,7 @@ export default async function globalSetup(_config: FullConfig) {
       if (error) throw new Error(`Failed to create test user ${user.email}: ${error.message}`)
     }
 
-    const client = createClient(LOCAL_SUPABASE_URL, process.env.SUPABASE_KEY ?? '')
+    const client = createClient(LOCAL_SUPABASE_URL, LOCAL_ANON_KEY)
     const { data: session, error: signInError } = await client.auth.signInWithPassword({
       email: user.email,
       password: user.password,
@@ -59,26 +93,18 @@ export default async function globalSetup(_config: FullConfig) {
       throw new Error(`Failed to sign in test user ${user.email}: ${signInError?.message}`)
     }
 
-    // Sets the session on a real page via the app's own client library (bundled
-    // locally, no CDN fetch) so cookies/storage land exactly where @nuxtjs/supabase
-    // expects them — the same shape a browser OAuth sign-in would produce.
     const page = await browser.newPage()
     await page.goto(process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000')
-    await page.addScriptTag({
-      path: require.resolve('@supabase/supabase-js/dist/umd/supabase.js'),
-    })
+    await page.addScriptTag({ content: sessionInjectorScript })
     await page.evaluate(
-      async ({ url, anonKey, currentSession }) => {
-        // @ts-expect-error — global from the injected UMD bundle
-        const c = window.supabase.createClient(url, anonKey)
-        await c.auth.setSession({
-          access_token: currentSession.access_token,
-          refresh_token: currentSession.refresh_token,
-        })
+      async ({ url, anonKey, cookieName, currentSession }) => {
+        // @ts-expect-error — global from the injected bundle above
+        await window.__setTestSession(url, anonKey, cookieName, currentSession)
       },
       {
         url: LOCAL_SUPABASE_URL,
-        anonKey: process.env.SUPABASE_KEY ?? '',
+        anonKey: LOCAL_ANON_KEY,
+        cookieName: AUTH_COOKIE_NAME,
         currentSession: session.session,
       },
     )
