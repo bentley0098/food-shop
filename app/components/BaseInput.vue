@@ -34,7 +34,7 @@ const errorId = computed(() => `${inputId.value}-error`)
       :autocomplete="autocomplete"
       :aria-invalid="!!error"
       :aria-describedby="error ? errorId : undefined"
-      class="min-h-[48px] rounded-[var(--radius-sm)] border bg-[var(--ui-fill)] px-3 text-body text-[var(--ui-text)] outline-none placeholder:text-[var(--ui-text-muted)]"
+      class="min-h-[48px] rounded-[var(--radius-sm)] border bg-[var(--ui-fill)] px-3 text-body text-[var(--ui-text)] placeholder:text-[var(--ui-text-muted)]"
       :class="[
         error ? 'border-clay-600' : 'border-[var(--ui-line)]',
         numeric ? 'u-num text-right' : '',

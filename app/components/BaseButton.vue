@@ -36,7 +36,11 @@ function guardClick(event: MouseEvent) {
     class="relative inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] font-sans text-body font-semibold transition-transform duration-[120ms] ease-[var(--ease-out-soft)] active:scale-[0.98] disabled:pointer-events-none"
     :class="[
       size === 'lg' ? 'h-[52px] px-6' : 'h-[44px] px-5',
-      disabled || loading ? 'cursor-not-allowed opacity-40' : 'cursor-pointer',
+      disabled
+        ? 'cursor-not-allowed opacity-40'
+        : loading
+          ? 'cursor-not-allowed'
+          : 'cursor-pointer',
       {
         'bg-beetroot-600 text-chalk-0 hover:brightness-95': variant === 'primary',
         'border border-[var(--ui-line)] bg-[var(--ui-surface)] text-[var(--ui-text)]':
@@ -52,7 +56,10 @@ function guardClick(event: MouseEvent) {
       class="absolute h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
       aria-hidden="true"
     />
-    <span class="inline-flex items-center gap-2" :class="{ invisible: loading }">
+    <!-- opacity-0, not `invisible`/visibility:hidden: the latter strips the
+    button's accessible name from the a11y tree while loading, so a screen
+    reader would announce nothing. -->
+    <span class="inline-flex items-center gap-2" :class="{ 'opacity-0': loading }">
       <slot />
     </span>
   </button>

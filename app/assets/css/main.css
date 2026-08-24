@@ -197,6 +197,18 @@
       'SOFT' 40,
       'WONK' 1;
   }
+  /*
+   * Two rules, same layer, source order matters: plain :focus (e.g. a mouse
+   * click into an input) gets no outline; :focus-visible (keyboard) then
+   * overrides that with the real ring. Both live in @layer base so a
+   * component's own `outline-none` utility (in Tailwind's utilities layer,
+   * which always wins over base regardless of selector specificity) can't
+   * silently cancel focus-visible along with it — components should never
+   * need `outline-none` for this reason.
+   */
+  :where(button, a, input, [tabindex]):focus {
+    outline: none;
+  }
   :where(button, a, input, [tabindex]):focus-visible {
     outline: 2px solid var(--ui-accent-text);
     outline-offset: 2px;

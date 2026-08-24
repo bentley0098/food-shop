@@ -41,7 +41,7 @@ function onPointerUp() {
         class="fixed inset-0 z-50 bg-ink-900/40 data-[state=closed]:animate-[sheet-fade-out_200ms_var(--ease-sheet)] data-[state=open]:animate-[sheet-fade-in_260ms_var(--ease-sheet)]"
       />
       <DialogContent
-        class="fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col rounded-t-[var(--radius-sheet)] bg-[var(--ui-surface)] shadow-[var(--shadow-sheet)] outline-none data-[state=closed]:animate-[sheet-slide-down_200ms_var(--ease-sheet)] data-[state=open]:animate-[sheet-slide-up_260ms_var(--ease-sheet)]"
+        class="fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col rounded-t-[var(--radius-sheet)] bg-[var(--ui-surface)] shadow-[var(--shadow-sheet)] data-[state=closed]:animate-[sheet-slide-down_200ms_var(--ease-sheet)] data-[state=open]:animate-[sheet-slide-up_260ms_var(--ease-sheet)]"
       >
         <div
           ref="sheetEl"

@@ -16,7 +16,7 @@ const modelValue = defineModel<string>()
     <label v-if="label" class="u-label">{{ label }}</label>
     <SelectRoot v-model="modelValue">
       <SelectTrigger
-        class="flex h-12 items-center justify-between rounded-[var(--radius-sm)] border border-[var(--ui-line)] bg-[var(--ui-fill)] px-3 text-body text-[var(--ui-text)] outline-none"
+        class="flex h-12 items-center justify-between rounded-[var(--radius-sm)] border border-[var(--ui-line)] bg-[var(--ui-fill)] px-3 text-body text-[var(--ui-text)]"
       >
         <SelectValue :placeholder="placeholder" />
         <SelectIcon>
