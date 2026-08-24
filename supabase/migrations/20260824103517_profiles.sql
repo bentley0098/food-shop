@@ -34,13 +34,20 @@ create policy "profiles are editable only by self"
   on public.profiles for update
   using (id = auth.uid());
 
+-- Table privileges are not granted by default (confirmed against a real
+-- run — Supabase does not auto-grant to anon/authenticated the way some
+-- docs imply). RLS policies only decide which *rows* a role can see; the
+-- role still needs the underlying GRANT or every query is a flat
+-- "permission denied", regardless of policy.
+grant select on public.profiles to authenticated;
+
 -- household_id is not client-writable at all (SPEC.md §3, DECISIONS.md A4):
 -- allowing it would let a user join any household by guessing a uuid. RLS
--- alone can't express a column-level restriction, so it's enforced by
--- narrowing the UPDATE grant itself. household_id is set only by the trigger
--- below and by the SECURITY DEFINER RPCs in the next migration, all of which
--- run as the function owner and are unaffected by this grant.
-revoke update on public.profiles from authenticated;
+-- alone can't express a column-level restriction, so update access is
+-- granted column-by-column instead of table-wide. household_id is set only
+-- by the trigger below and by the SECURITY DEFINER RPCs in the next
+-- migration, both of which run as the function owner and are unaffected by
+-- this grant.
 grant update (display_name, avatar_url) on public.profiles to authenticated;
 
 -- No insert/delete policy: rows are created by the trigger below and removed

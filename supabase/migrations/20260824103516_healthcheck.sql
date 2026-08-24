@@ -13,3 +13,8 @@ alter table public.healthcheck enable row level security;
 create policy "healthcheck is readable by anyone"
   on public.healthcheck for select
   using (true);
+
+-- Table privileges aren't granted by default — the keepalive cron hits this
+-- with the anon key, unauthenticated, so anon needs the grant too, not just
+-- authenticated (DECISIONS.md; see the same note in the profiles migration).
+grant select on public.healthcheck to anon, authenticated;

@@ -39,6 +39,7 @@ Phase 3 is the product. Phases 0–2 exist to feed it; 4–5 make it pleasant. I
 
 - [ ] **Migrations are forward-only.** Every schema change is a new timestamped file in `supabase/migrations/`. Never edit a migration that has been applied on a shared environment.
 - [ ] **RLS is written in the same migration as the table.** A table is never created without its policies in the same file.
+- [ ] **Table grants are written alongside the policies, in the same migration.** A policy without a `GRANT` is a table nobody can query at all — Postgres checks privileges before RLS (DECISIONS.md H3, found by CI, not by review).
 - [ ] **Every table added is added to the RLS isolation test** (`supabase/tests/rls.sql`) in the same PR.
 - [ ] **Types are regenerated** (`shared/types/database.ts`) whenever a migration lands, and the regeneration is committed.
 - [ ] **Components use semantic tokens** (`var(--ui-*)`), never raw ramp steps outside the brand primitives (DESIGN §3).

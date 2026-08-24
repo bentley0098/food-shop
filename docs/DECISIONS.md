@@ -36,6 +36,7 @@ Append new entries at the bottom. Never edit a closed one — supersede it with 
 | G1 | Household create/leave RPCs | `create_household()` and `leave_household()`, both SECURITY DEFINER | ✅ Closed |
 | H1 | No local Docker | Local dev targets the hosted project directly; CI keeps Docker (GitHub-hosted, invisible locally) | ✅ Closed |
 | H2 | Supabase region | `eu-west-1` (Ireland), not `eu-west-2` (London) — user is closer to Ireland | ✅ Closed |
+| H3 | Table grants required | RLS policies alone don't grant access — every table needs an explicit `GRANT` to `anon`/`authenticated` too, or every query is "permission denied" regardless of policy | ✅ Closed |
 
 **Open:** nothing blocking Phase 0. E2's caveat is resolved.
 
@@ -260,6 +261,16 @@ Append new entries at the bottom. Never edit a closed one — supersede it with 
 **Why:** the user is physically closer to Ireland than London; the reasoning behind picking *a* nearby region over a US default is unchanged, only which nearby region.
 
 **Landed in:** `docs/INFRASTRUCTURE.md` §0, §1, §2.1, §3.1 (region references updated). Vercel project region is a dashboard setting, not code — set it to `dub1` when the Vercel project is created (INFRASTRUCTURE.md §11 checklist).
+
+## H3 — Table grants required
+
+**Decided:** every table with an RLS policy also needs an explicit `GRANT SELECT`/`UPDATE`/etc. to `anon` and/or `authenticated`, added alongside the policies in the same migration. `SPEC.md` §3's `RLS` section describes policies only and implicitly assumed table-level access was already open — it wasn't.
+
+**Why:** discovered by CI's first real run, not by design review. The pgTAP suite failed with `permission denied for table households`, not an RLS assertion failure — Postgres checks table-level `GRANT`s before it ever evaluates a row-level policy, and this Supabase project does not auto-grant `anon`/`authenticated` access to newly created tables. Every table migration up to this point (`healthcheck`, `profiles`, `households`, `household_invites`) had a policy and no grant, meaning the actual app would have hit "permission denied" on every query once deployed — this wasn't just a test gap, it was a real break caught before it shipped.
+
+**Landed in:** `supabase/migrations/20260824103516_healthcheck.sql` (`grant select ... to anon, authenticated`), `20260824103517_profiles.sql` (`grant select`, plus the existing column-scoped `grant update`), `20260824103518_households_and_invites.sql` (`grant select, update` on `households`; `grant select` on `household_invites`, RLS's zero policies still the real block). `household_invite_attempts` and `products` (Phase 1) intentionally carry no client grant at all — there is no legitimate client read path, so "permission denied" is the correct behaviour, not a gap to fix.
+
+**Standing rule going forward:** every future table migration states its `GRANT`s explicitly, in the same migration as its policies — don't assume either half implies the other.
 
 ## What changed, in one paragraph
 

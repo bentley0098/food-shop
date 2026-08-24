@@ -23,6 +23,11 @@ create policy "household members can update their household"
 -- No insert/delete policy: households are created only by create_household()
 -- below and never deleted by the client in v1.
 
+-- Table privileges aren't granted by default (DECISIONS.md, see the same
+-- note in the profiles migration) — RLS alone doesn't let a role query a
+-- table at all without this.
+grant select, update on public.households to authenticated;
+
 -- Now that households exists, wire up the FK deferred from the profiles
 -- migration (SPEC.md §2: "profiles.household_id | on delete set null |
 -- deleting a household orphans its members rather than deleting them").
@@ -50,7 +55,11 @@ alter table public.household_invites enable row level security;
 -- Deliberately zero policies: never exposed to the client directly (SPEC.md
 -- §3). RLS enabled with no policy is default-deny for every role except the
 -- table owner, which is exactly what "joining goes only through the RPC"
--- requires.
+-- requires. The SELECT grant below is what makes that a *policy* decision
+-- rather than a blanket permission error — without it the client can't
+-- query the table at all, policy or not, which still reads as "never
+-- exposed" but for the wrong reason.
+grant select on public.household_invites to authenticated;
 
 -- Rate-limit bookkeeping for accept_household_invite(). Also never exposed
 -- to the client — written only from inside that function.
