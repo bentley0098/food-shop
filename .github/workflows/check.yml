@@ -39,33 +39,36 @@ jobs:
           version: latest
 
       - name: Start Supabase and apply all migrations from zero
+        # `supabase start` (not `db start`, which only starts Postgres) — the
+        # e2e step below needs Auth/Kong running too, to mint real sessions
+        # via the Admin API (INFRASTRUCTURE.md §7.1).
         run: |
-          supabase db start
+          supabase start
           supabase db reset
 
       - name: RLS isolation tests (pgTAP, supabase/tests/*.sql)
         run: supabase test db
 
       - name: Export local Supabase env for build + e2e
+        # API_URL/ANON_KEY/SERVICE_ROLE_KEY are `-o env`'s real default names
+        # (confirmed against the CLI source) — they only failed to appear
+        # before because `db start` never brings up Auth/Kong to populate them.
         run: |
-          echo "::group::raw supabase status -o json output (debugging field names)"
-          supabase status -o json | tee /tmp/supabase-status.json
-          echo "::endgroup::"
+          source <(supabase status -o env)
           {
-            echo "SUPABASE_URL=$(jq -r '.API_URL' /tmp/supabase-status.json)"
-            echo "SUPABASE_KEY=$(jq -r '.ANON_KEY' /tmp/supabase-status.json)"
-            echo "SUPABASE_SERVICE_KEY=$(jq -r '.SERVICE_ROLE_KEY' /tmp/supabase-status.json)"
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_KEY=$SERVICE_ROLE_KEY"
           } >> "$GITHUB_ENV"
 
       - name: Build (proves the service-role key never lands in the client bundle)
         run: npm run build
 
       - name: Secret boundary — built client bundle
-        # nitro's `vercel` preset writes client-servable files to
-        # .vercel/output/static, not .output/public — .vercel/output/functions
-        # is server code and legitimately references the key.
+        # default node-server preset (no nitro.preset override — Vercel
+        # applies its own preset at deploy time, see nuxt.config.ts).
         run: |
-          ! grep -rFn "$SUPABASE_SERVICE_KEY" .vercel/output/static 2>/dev/null
+          ! grep -rFn "$SUPABASE_SERVICE_KEY" .output/public 2>/dev/null
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
