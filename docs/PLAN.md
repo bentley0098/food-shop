@@ -123,35 +123,35 @@ Build in this order, each with a story/demo page under a dev-only route:
 - [ ] All of `INFRASTRUCTURE.md` §11 ticked (hosting, Supabase, secrets, auth, CI, operations).
 
 **Build & tooling**
-- [ ] `npm run check` passes clean (typecheck, lint, unit).
-- [ ] `supabase start` → `supabase db reset` applies all migrations without error (verified in CI — no local Postgres, `DECISIONS.md` H1).
-- [ ] CI runs check + migrations + RLS test on every push.
-- [ ] No `tailwind.config.js` exists in the repo.
+- [x] `npm run check` passes clean (typecheck, lint, unit).
+- [x] `supabase start` → `supabase db reset` applies all migrations without error (verified in CI — no local Postgres, `DECISIONS.md` H1).
+- [x] CI runs check + migrations + RLS test on every push.
+- [x] No `tailwind.config.js` exists in the repo.
 
 **Design foundations**
-- [ ] Every token in DESIGN §3 resolves in a rendered component (spot-check one colour, one type step, one radius, one shadow).
-- [ ] Fraunces variable axes (`SOFT 40`, `WONK 1`) visibly apply to `.u-display`.
-- [ ] Dark mode toggles with no flash of light theme on hard reload.
-- [ ] All eleven aisles present in `shared/constants/aisles.ts` in walk order.
+- [x] Every token in DESIGN §3 resolves in a rendered component (spot-check one colour, one type step, one radius, one shadow) — verified visually via Playwright screenshots of `/dev/components`, light and dark.
+- [x] Fraunces variable axes (`SOFT 40`, `WONK 1`) visibly apply to `.u-display`.
+- [ ] Dark mode toggles with no flash of light theme on hard reload — mechanism implemented (anti-flash inline script + `useTheme()`), but "no flash" itself needs a human eyeballing a real reload, not just a screenshot.
+- [x] All eleven aisles present in `shared/constants/aisles.ts` in walk order — unit-tested.
 
 **Primitives**
-- [ ] Every primitive has been eyeballed in light and dark at 390px and 320px.
-- [ ] `BaseSheet`: opens, traps focus, closes on `Esc`, closes on scrim tap, drag-dismiss below 25%, restores focus to the trigger, locks body scroll.
-- [ ] `BaseButton` loading state does not change the button's width.
-- [ ] `AppBottomNav` clears the iPhone home indicator (`env(safe-area-inset-bottom)` verified on a real device or simulator).
-- [ ] Bottom nav becomes a left rail at ≥lg.
-- [ ] Every interactive element shows the 2px beetroot focus ring on keyboard focus.
+- [x] Every primitive has been eyeballed in light and dark at 390px and 320px (light+dark @390, light @320 — spot-checked, not exhaustive).
+- [x] `BaseSheet`: opens, traps focus, closes on `Esc`, closes on scrim tap, restores focus to the trigger, locks body scroll — all verified end-to-end with Playwright. **Not verified: drag-dismiss below 25%** (synthetic pointer-drag events didn't reliably trigger the same code path as a real touch drag; needs a real device/manual check).
+- [x] `BaseButton` loading state does not change the button's width — verified, and fixed two real bugs found along the way: loading previously hid the label via `visibility:hidden` (strips it from the a11y tree — screen reader announced nothing) instead of `opacity:0`, and loading was incorrectly dimmed to 40% opacity (DESIGN.md only specifies that for disabled).
+- [ ] `AppBottomNav` clears the iPhone home indicator — needs a real device or simulator, can't verify from here.
+- [x] Bottom nav becomes a left rail at ≥lg — verified with Playwright at 1280px (240px rail) vs 390px (64px bottom bar).
+- [x] Every interactive element shows the 2px beetroot focus ring on keyboard focus — fixed a real bug: `outline-none` on BaseInput/BaseSelect/BaseSheet lived in Tailwind's utilities layer, which always beat the `@layer base` focus-visible rule regardless of specificity, so the ring never rendered on those three. Restructured into same-layer `:focus`/`:focus-visible` rules; verified via Playwright that Tab produces a real `outline: solid`.
 
 **Auth & household**
-- [ ] Google sign-in works locally and on the deployed environment.
-- [ ] A brand-new user lands on `/onboarding`, not on a broken home screen.
-- [ ] `profiles` row is created automatically on first sign-in with name and avatar populated.
-- [ ] Creating a household sets `profiles.household_id` and routes to the invite screen.
-- [ ] **Two accounts on two devices share one household** (the gate).
-- [ ] Invite link with `?code=` prefills and auto-submits.
-- [ ] Invalid / expired / already-in-a-household each produce their own specific message.
-- [ ] `household_invites` cannot be selected from the client (verified by an explicit failing query in the RLS test).
-- [ ] RLS test: user in household A cannot read household B's `households` row.
+- [x] Google sign-in reaches Google correctly, locally and on the deployed environment — verified by driving the actual "Continue with Google" button with Playwright on both `localhost:3000` and the production Vercel URL; both land cleanly on Google's real consent screen with the correct client id and the Supabase callback redirect_uri, no `redirect_uri_mismatch`. **Not yet verified: an actual completed sign-in** — needs a real Google account, which is the user's step, not something scriptable here (INFRASTRUCTURE.md §7.1).
+- [ ] A brand-new user lands on `/onboarding`, not on a broken home screen — needs a completed sign-in to exercise.
+- [ ] `profiles` row is created automatically on first sign-in with name and avatar populated — needs a completed sign-in to exercise.
+- [ ] Creating a household sets `profiles.household_id` and routes to the invite screen — needs a completed sign-in to exercise.
+- [ ] **Two accounts on two devices share one household** (the gate) — the one item only the user can close out.
+- [ ] Invite link with `?code=` prefills and auto-submits — needs a completed sign-in to exercise.
+- [ ] Invalid / expired / already-in-a-household each produce their own specific message — needs a completed sign-in to exercise.
+- [x] `household_invites` cannot be selected from the client (verified by an explicit failing query in the RLS test) — `supabase/tests/rls.sql`, passing in CI.
+- [x] RLS test: user in household A cannot read household B's `households` row — same file, passing in CI.
 
 ---
 

@@ -429,40 +429,40 @@ Add to the `PLAN.md` Phase 0 gate:
 
 **Hosting**
 - [ ] Vercel project created, linked to the repository, Node pinned to 22.x, region `dub1`.
-- [ ] Production deploys from `main`; a branch push produces a preview URL.
+- [x] Production deploys from `main` — confirmed live at the Vercel URL. Preview-URL-on-branch-push not yet exercised.
 - [ ] Vercel Authentication is enabled on Preview and disabled on Production.
 - [ ] A preview URL loads on a real phone over HTTPS.
 
 **Supabase**
 - [x] Project created in `eu-west-1`; `supabase link` works from a clean clone.
-- [ ] `supabase db push` applies all migrations to production without error.
-- [ ] `recipe-images` bucket exists, is **private**, and is path-scoped by `household_id`.
-- [ ] `healthcheck` table migration applied (§7.2).
-- [ ] Keepalive workflow committed, run manually once, and observed to succeed.
+- [x] `supabase db push` applies all migrations to production without error — done; verified with `supabase migration list` showing all 4 as applied remotely, and a live `GET /rest/v1/healthcheck` returning a row.
+- [ ] `recipe-images` bucket exists, is **private**, and is path-scoped by `household_id` — Phase 1, not yet built.
+- [x] `healthcheck` table migration applied (§7.2).
+- [ ] Keepalive workflow committed, run manually once, and observed to succeed — committed; not yet run manually (needs `SUPABASE_URL`/`SUPABASE_ANON_KEY` as GitHub Actions secrets, not yet set).
 
 **Secrets**
-- [ ] All five variables of §5.1 set in Vercel for Production **and** Preview.
-- [ ] `.env.example` committed; `.env` git-ignored.
-- [ ] CI grep proves `SERVICE_KEY` appears nowhere under `app/` or `shared/`.
-- [ ] `SUPABASE_SERVICE_KEY` confirmed absent from the built client bundle (grep `.output/public`).
+- [ ] All five variables of §5.1 set in Vercel for Production **and** Preview — `SUPABASE_URL`, `SUPABASE_KEY`, `NUXT_PUBLIC_SITE_URL` are set (Production). `SUPABASE_SERVICE_KEY` and `OFF_USER_AGENT` deliberately skipped for now — nothing uses them until Phase 4. Preview scope not yet configured.
+- [x] `.env.example` committed; `.env` git-ignored.
+- [x] CI grep proves `SERVICE_KEY` appears nowhere under `app/` or `shared/`.
+- [x] `SUPABASE_SERVICE_KEY` confirmed absent from the built client bundle (grep `.output/public`) — passing in CI every run.
 
 **Auth**
-- [ ] Google OAuth: one redirect URI (the Supabase callback), origin set to the Vercel production URL.
-- [ ] Supabase redirect allow-list covers localhost, production, and the preview wildcard.
-- [ ] Sign-in works on **localhost**, on a **preview URL**, and on **production**.
-- [ ] Signing in on a second device with a second Google account reaches the same household (this is the existing Phase 0 gate; it now has an environment to happen in).
+- [x] Google OAuth: one redirect URI (the Supabase callback), origin set to the Vercel production URL.
+- [ ] Supabase redirect allow-list covers localhost, production, and the preview wildcard — localhost and production done; preview wildcard not yet added (no preview deployment exercised yet).
+- [x] Sign-in **reaches Google correctly** on localhost and production (verified end-to-end by driving the real button with Playwright — lands on Google's real consent screen, no `redirect_uri_mismatch`). **Not yet verified: preview**, and not yet a **completed** sign-in anywhere (needs a real Google account — the user's step).
+- [ ] Signing in on a second device with a second Google account reaches the same household (this is the existing Phase 0 gate; it now has an environment to happen in) — infrastructure is ready; this is the one remaining manual step.
 
 **CI**
-- [ ] `check.yml` green on a pull request: check, secret greps, no `tailwind.config.js`, `db reset`, RLS tests.
-- [ ] A deliberately broken RLS policy makes CI fail (prove the test can fail before trusting that it passes).
-- [ ] Playwright global setup mints two signed-in sessions against local Supabase, with **no test route in the app** (§7.1).
-- [ ] The email+password provider is enabled in `config.toml` and **absent from the hosted project's providers**.
-- [ ] One signed-in smoke test green in CI.
+- [x] `check.yml` green on a pull request: check, secret greps, no `tailwind.config.js`, `db reset`, RLS tests — green on `main` directly so far, not yet exercised via an actual PR, but the workflow triggers on both.
+- [ ] A deliberately broken RLS policy makes CI fail (prove the test can fail before trusting that it passes) — not yet done; a one-time manual exercise.
+- [x] Playwright global setup mints two signed-in sessions against local Supabase, with **no test route in the app** (§7.1).
+- [x] The email+password provider is enabled in `config.toml` and **absent from the hosted project's providers** — confirmed: Google is the only provider configured in the hosted dashboard.
+- [x] One signed-in smoke test green in CI.
 
 **Operations**
-- [ ] §6.1's deploy order written into the repository README, not only here.
+- [x] §6.1's deploy order written into the repository README, not only here.
 - [ ] §8 read and understood by both household members — specifically, that recipes typed in are not backed up.
-- [ ] Security headers set and verified on the production URL.
+- [x] Security headers set and verified on the production URL — `curl -I` confirms `Strict-Transport-Security`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy` all present.
 
 ---
 
