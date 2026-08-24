@@ -1,0 +1,213 @@
+@import 'tailwindcss';
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* neutrals */
+  --color-chalk-0: #fffdf9;
+  --color-chalk-50: #faf6ef;
+  --color-chalk-100: #f1ebe1;
+  --color-chalk-200: #e4dccf;
+  --color-chalk-300: #cfc5b4;
+  --color-ash-500: #736b5b;
+  --color-ash-600: #5c5548;
+  --color-ash-700: #3d382e;
+  --color-ink-900: #17150f;
+  --color-soot-950: #14120f;
+  --color-soot-900: #1d1a15;
+  --color-soot-800: #272219;
+  --color-soot-700: #373125;
+  --color-soot-400: #8c8374;
+  --color-soot-300: #a9a092;
+
+  /* brand */
+  --color-beetroot-50: #fbeef1;
+  --color-beetroot-100: #f6d9e0;
+  --color-beetroot-300: #de93a6;
+  --color-beetroot-500: #b04665;
+  --color-beetroot-600: #8e2c48;
+  --color-beetroot-700: #6e2038;
+  --color-beetroot-900: #3d1220;
+
+  --color-bay-50: #ecf4f0;
+  --color-bay-100: #d3e6de;
+  --color-bay-300: #85b5a5;
+  --color-bay-500: #48806f;
+  --color-bay-600: #2f5d50;
+  --color-bay-700: #24483e;
+
+  --color-turmeric-50: #fdf3df;
+  --color-turmeric-100: #fae5b8;
+  --color-turmeric-300: #efc469;
+  --color-turmeric-500: #e0a32e;
+  --color-turmeric-700: #a8730f;
+  --color-turmeric-900: #5c3d06;
+
+  --color-clay-100: #f7ddd6;
+  --color-clay-600: #a33a21;
+  --color-clay-900: #4a1a0e;
+
+  /* type */
+  --font-display: 'Fraunces', ui-serif, Georgia, serif;
+  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --text-display: 2rem;
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.02em;
+  --text-title-lg: 1.5rem;
+  --text-title-lg--line-height: 1.15;
+  --text-title-lg--letter-spacing: -0.015em;
+  --text-title-md: 1.25rem;
+  --text-title-md--line-height: 1.2;
+  --text-title-sm: 1.0625rem;
+  --text-title-sm--line-height: 1.3;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5;
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.45;
+  --text-label: 0.75rem;
+  --text-label--line-height: 1;
+  --text-num-lg: 1.75rem;
+  --text-num-lg--line-height: 1;
+  --text-num: 1rem;
+  --text-num--line-height: 1.2;
+
+  /* shape */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-sheet: 20px;
+
+  /* elevation — exactly two shadows; cards get none, ever (DESIGN §2.3) */
+  --shadow-bar: 0 -1px 0 var(--color-chalk-200), 0 -8px 24px -12px rgb(23 21 15 / 0.18);
+  --shadow-sheet: 0 -2px 40px -8px rgb(23 21 15 / 0.28);
+
+  /* motion */
+  --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-sheet: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* motion durations (DESIGN §2.5) — plain custom properties, referenced directly
+   in component transitions rather than as Tailwind utilities */
+:root {
+  --motion-snap: 120ms;
+  --motion-move: 180ms;
+  --motion-sheet-enter: 260ms;
+  --motion-sheet-exit: 200ms;
+}
+
+/* semantic aliases — components reference these, not raw ramp steps */
+:root {
+  --ui-ground: var(--color-chalk-50);
+  --ui-surface: var(--color-chalk-0);
+  --ui-fill: var(--color-chalk-100);
+  --ui-line: var(--color-chalk-200);
+  --ui-line-soft: var(--color-chalk-300);
+  --ui-text: var(--color-ink-900);
+  --ui-text-muted: var(--color-ash-600);
+  --ui-text-dim: var(--color-ash-500);
+  --ui-accent: var(--color-beetroot-600);
+  --ui-accent-text: var(--color-beetroot-600);
+  --ui-done: var(--color-bay-600);
+}
+.dark {
+  --ui-ground: var(--color-soot-950);
+  --ui-surface: var(--color-soot-900);
+  --ui-fill: var(--color-soot-800);
+  --ui-line: var(--color-soot-700);
+  --ui-line-soft: var(--color-soot-700);
+  --ui-text: var(--color-chalk-50);
+  --ui-text-muted: var(--color-soot-300);
+  --ui-text-dim: var(--color-soot-400);
+  --ui-accent: var(--color-beetroot-600);
+  --ui-accent-text: var(--color-beetroot-300);
+  --ui-done: var(--color-bay-300);
+}
+
+@keyframes u-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes sheet-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes sheet-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes sheet-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes sheet-slide-down {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@layer utilities {
+  .u-skeleton {
+    background-color: var(--ui-fill);
+    animation: u-skeleton-pulse 1.4s ease-in-out infinite;
+  }
+}
+
+@layer base {
+  html {
+    background: var(--ui-ground);
+    color: var(--ui-text);
+  }
+  body {
+    font-family: var(--font-sans);
+  }
+  .u-label {
+    font-size: var(--text-label);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ui-text-muted);
+  }
+  .u-num {
+    font-variant-numeric: tabular-nums;
+  }
+  .u-display {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-variation-settings:
+      'SOFT' 40,
+      'WONK' 1;
+  }
+  :where(button, a, input, [tabindex]):focus-visible {
+    outline: 2px solid var(--ui-accent-text);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
