@@ -28,7 +28,7 @@ jobs:
       - name: Secret boundary — no NUXT_PUBLIC_*SERVICE* anywhere
         run: |
           ! grep -rn "NUXT_PUBLIC.*SERVICE" . --include="*.ts" --include="*.vue" \
-            --exclude-dir=node_modules --exclude-dir=.nuxt --exclude-dir=.output
+            --exclude-dir=node_modules --exclude-dir=.nuxt --exclude-dir=.output --exclude-dir=.vercel
 
       - name: No tailwind.config.js — CSS-first only (SPEC.md §1)
         run: |
@@ -47,14 +47,24 @@ jobs:
         run: supabase test db
 
       - name: Export local Supabase env for build + e2e
-        run: supabase status -o env >> "$GITHUB_ENV"
+        run: |
+          supabase status -o env > /tmp/supabase-status.env
+          source /tmp/supabase-status.env
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
 
       - name: Build (proves the service-role key never lands in the client bundle)
         run: npm run build
 
       - name: Secret boundary — built client bundle
+        # nitro's `vercel` preset writes client-servable files to
+        # .vercel/output/static, not .output/public — .vercel/output/functions
+        # is server code and legitimately references the key.
         run: |
-          ! grep -rn "SUPABASE_SERVICE_KEY" .output/public 2>/dev/null
+          ! grep -rFn "$SUPABASE_SERVICE_KEY" .vercel/output/static 2>/dev/null
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium

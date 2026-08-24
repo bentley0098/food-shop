@@ -1,7 +1,7 @@
 # Recipe Model Spike
 
-**Status:** Findings for review · **Date:** 2026-08-24
-**Companions:** `docs/SPEC.md` §2 (the schema under test)
+**Status:** Findings confirmed against real data — see update below · **Date:** 2026-08-24
+**Companions:** `docs/SPEC.md` §2 (the schema under test), `docs/REAL-WEEK-EXAMPLE.md` (the real-recipe re-run this doc calls for)
 **Cost:** half a day, no code
 **Purpose:** find out whether real recipes fit `quantity / unit / ingredient` **before** Phase 0 writes a migration.
 
@@ -14,6 +14,8 @@ The recipes below are **representative, not yours.** They are ten meals a UK two
 That substitution is the doc's one weakness, and it matters: your actual repertoire will expose at least one thing this didn't. **Re-run §1 with ten recipes you genuinely cook before accepting §3's decisions.** It takes an hour with a notepad and it is the last cheap moment to change the schema.
 
 What follows is therefore a *provisional* set of findings — strong enough to act on, weak enough that a contradicting real recipe should win.
+
+**Update:** that re-run happened — see `REAL-WEEK-EXAMPLE.md`. Five real meals rather than ten, supplied as a shopping list rather than full recipe cards, but real. It confirms F1, F11, and F13 directly and adds two low-severity findings (F14, F15), neither requiring a schema change. Treat this doc's findings as confirmed rather than provisional.
 
 ---
 

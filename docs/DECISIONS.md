@@ -26,7 +26,7 @@ Append new entries at the bottom. Never edit a closed one — supersede it with 
 | C4 | Invite code strength | 10-char Crockford base32, single-use, rate-limited | ✅ Closed |
 | D1 | Offline shopping | Tick-only offline queue, in Phase 3 scope | ✅ Closed |
 | D2 | Cold-start data entry | Paste-a-list bulk entry, in Phase 1 scope | ✅ Closed |
-| E2 | Schema vs real recipes | Spike run; three columns, one relaxed constraint | ⚠️ Closed provisionally — **re-run with your own ten recipes** |
+| E2 | Schema vs real recipes | Spike run; three columns, one relaxed constraint | ✅ Closed — confirmed against a real week (`REAL-WEEK-EXAMPLE.md`) |
 | E3a | `products` phasing | `products` created in Phase 1, empty | ✅ Closed |
 | E3b | Dimming and contrast | `--ui-text-dim` token, never `opacity` | ✅ Closed |
 | F | Modal plumbing | Reka UI headless primitives | ✅ Closed |
@@ -37,7 +37,7 @@ Append new entries at the bottom. Never edit a closed one — supersede it with 
 | H1 | No local Docker | Local dev targets the hosted project directly; CI keeps Docker (GitHub-hosted, invisible locally) | ✅ Closed |
 | H2 | Supabase region | `eu-west-1` (Ireland), not `eu-west-2` (London) — user is closer to Ireland | ✅ Closed |
 
-**Open:** nothing blocking Phase 0. E2 carries the only caveat, and it is a caveat about verification rather than about the decision.
+**Open:** nothing blocking Phase 0. E2's caveat is resolved.
 
 ---
 
@@ -176,6 +176,8 @@ Append new entries at the bottom. Never edit a closed one — supersede it with 
 **Landed in:** `RECIPE-MODEL-SPIKE.md` (new).
 
 **⚠️ Caveat, and the only one in this document:** the ten recipes are representative, not yours. **Re-run §1 with ten meals you actually cook before the Phase 1 migration is written.** An hour with a notepad. If your repertoire includes baking or anything portioned by "makes 12", expect at least one more finding — `recipes.servings` as a portion count is doing quiet work that muffins would break.
+
+**Update — caveat addressed:** five real meals plus the hand-built shopping list they produced, supplied directly rather than reconstructed. Confirms F1, F11, and F13 against real data and adds two low-severity findings (F14 "either/or" ingredients, F15 unnamed staples), both resolved without a schema change. **Landed in:** `REAL-WEEK-EXAMPLE.md` (new); recommended as the actual `seed.sql` content in `PLAN.md` §1.1. Status below moved to closed.
 
 ## E3a — `products` phasing
 

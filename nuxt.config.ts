@@ -101,9 +101,13 @@ export default defineNuxtConfig({
     },
   },
 
-  nitro: {
-    preset: 'vercel',
-  },
+  // No `nitro.preset` here, deliberately: Vercel auto-detects Nuxt and
+  // applies the `vercel` preset itself at deploy time (INFRASTRUCTURE.md
+  // §2.1). Hardcoding it here breaks `nuxt preview` locally and in CI
+  // ("Preview is not supported for this build") since the vercel preset's
+  // `.vercel/output/functions/*.func` layout isn't previewable the way the
+  // default node-server preset's `.output/server` is — and CI's e2e step
+  // depends on `npm run preview` working.
 
   eslint: {
     config: {
