@@ -1,0 +1,63 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck, lint, format, unit tests
+        run: npm run check
+
+      - name: Secret boundary — SERVICE_KEY confined to server/
+        run: |
+          ! grep -rn "SERVICE_KEY" app/ shared/ 2>/dev/null
+
+      - name: Secret boundary — no NUXT_PUBLIC_*SERVICE* anywhere
+        run: |
+          ! grep -rn "NUXT_PUBLIC.*SERVICE" . --include="*.ts" --include="*.vue" \
+            --exclude-dir=node_modules --exclude-dir=.nuxt --exclude-dir=.output
+
+      - name: No tailwind.config.js — CSS-first only (SPEC.md §1)
+        run: |
+          ! test -f tailwind.config.js
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Supabase and apply all migrations from zero
+        run: |
+          supabase db start
+          supabase db reset
+
+      - name: RLS isolation tests (pgTAP, supabase/tests/*.sql)
+        run: supabase test db
+
+      - name: Export local Supabase env for build + e2e
+        run: supabase status -o env >> "$GITHUB_ENV"
+
+      - name: Build (proves the service-role key never lands in the client bundle)
+        run: npm run build
+
+      - name: Secret boundary — built client bundle
+        run: |
+          ! grep -rn "SUPABASE_SERVICE_KEY" .output/public 2>/dev/null
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E — signed-in smoke test (INFRASTRUCTURE.md §7.1)
+        run: npm run test:e2e
