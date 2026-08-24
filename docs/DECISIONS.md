@@ -37,6 +37,7 @@ Append new entries at the bottom. Never edit a closed one — supersede it with 
 | H1 | No local Docker | Local dev targets the hosted project directly; CI keeps Docker (GitHub-hosted, invisible locally) | ✅ Closed |
 | H2 | Supabase region | `eu-west-1` (Ireland), not `eu-west-2` (London) — user is closer to Ireland | ✅ Closed |
 | H3 | Table grants required | RLS policies alone don't grant access — every table needs an explicit `GRANT` to `anon`/`authenticated` too, or every query is "permission denied" regardless of policy | ✅ Closed |
+| H4 | Invite RPCs called directly, not via server routes | Dropped `server/api/invites/*`; onboarding/settings call `create_household_invite`/`accept_household_invite` client-side | ✅ Closed |
 
 **Open:** nothing blocking Phase 0. E2's caveat is resolved.
 
@@ -271,6 +272,16 @@ Append new entries at the bottom. Never edit a closed one — supersede it with 
 **Landed in:** `supabase/migrations/20260824103516_healthcheck.sql` (`grant select ... to anon, authenticated`), `20260824103517_profiles.sql` (`grant select`, plus the existing column-scoped `grant update`), `20260824103518_households_and_invites.sql` (`grant select, update` on `households`; `grant select` on `household_invites`, RLS's zero policies still the real block). `household_invite_attempts` and `products` (Phase 1) intentionally carry no client grant at all — there is no legitimate client read path, so "permission denied" is the correct behaviour, not a gap to fix.
 
 **Standing rule going forward:** every future table migration states its `GRANT`s explicitly, in the same migration as its policies — don't assume either half implies the other.
+
+## H4 — Invite RPCs called directly, not via server routes
+
+**Decided:** `server/api/invites/create.post.ts` and `accept.post.ts` are removed. `onboarding/index.vue`, `onboarding/join.vue`, and `settings/household.vue` call `create_household_invite()`/`accept_household_invite()` directly via `client.rpc(...)`, the same pattern `create_household()` already used.
+
+**Why:** the first real (non-test) sign-in reproduced a failure the CI smoke test never caught. Household creation (already a direct client RPC) worked — confirmed live in the database — but the very next step, generating an invite code through `/api/invites/create`, silently did nothing: the code caught the fetch error and redirected home with no message, so the failure was invisible. `server/api/invites/*` depended on Nitro's `serverSupabaseClient` correctly re-parsing the `@supabase/ssr` session cookie from the incoming request — a code path the client-side call never touches. The leading theory: a real Google OAuth session carries far more in the JWT/user object (name, avatar, email, provider tokens) than the tiny CI test-auth fixtures do, plausibly crossing `@supabase/ssr`'s ~3180-byte single-cookie threshold into multi-cookie chunking, which the server-side reconstruction may not handle identically to the client-side one. Rather than debug an exact root cause with no way to reproduce it outside production, the fix removes the code path entirely: the RPCs are already `SECURITY DEFINER` and derive everything from `auth.uid()`, so the server-route wrapper added no security value, only a session-forwarding dependency that just broke silently.
+
+**Also fixed while here:** every `catch` around these calls previously swallowed the error and redirected/did nothing. All three now surface the real error message instead.
+
+**Landed in:** `app/pages/onboarding/index.vue`, `app/pages/onboarding/join.vue`, `app/pages/settings/household.vue`. `server/api/invites/` deleted. `PLAN.md` §0.5's "Server routes" line no longer applies — noted there.
 
 ## What changed, in one paragraph
 

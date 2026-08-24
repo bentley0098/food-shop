@@ -7,6 +7,10 @@ definePageMeta({ layout: 'auth' })
 
 const route = useRoute()
 const store = useHouseholdStore()
+// TODO: drop the `any` once shared/types/database.ts has real generated
+// types wired into nuxt.config.ts's `supabase.types`.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const client = useSupabaseClient<any>()
 
 const code = ref(typeof route.query.code === 'string' ? route.query.code.toUpperCase() : '')
 const joining = ref(false)
@@ -19,15 +23,19 @@ async function join() {
   }
   error.value = ''
   joining.value = true
-  try {
-    await $fetch('/api/invites/accept', { method: 'POST', body: { code: code.value.trim() } })
-    await store.fetch()
-    await navigateTo('/')
-  } catch {
+  // Direct RPC — see onboarding/index.vue's handleJoin for why this isn't
+  // routed through /api/invites/accept.
+  const { error: joinError } = await client.rpc('accept_household_invite', {
+    p_code: code.value.trim(),
+  })
+  if (joinError) {
     error.value = "That code isn't valid"
-  } finally {
     joining.value = false
+    return
   }
+  await store.fetch()
+  joining.value = false
+  await navigateTo('/')
 }
 
 onMounted(() => {

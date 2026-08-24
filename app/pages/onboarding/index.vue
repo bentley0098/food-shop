@@ -42,13 +42,20 @@ async function handleCreate() {
   }
   await store.fetch()
 
-  try {
-    const invite = await $fetch<{ code: string }>('/api/invites/create', { method: 'POST' })
-    inviteCode.value = invite.code
-    phase.value = 'invite'
-  } catch {
-    await navigateTo('/')
+  // Direct RPC, not the /api/invites/create route: that route depends on
+  // Nitro correctly forwarding the @supabase/ssr session cookie, which can
+  // silently fail server-side (e.g. cookie chunking on a large real OAuth
+  // session) in a way the client-side call above never hits. Same RPC,
+  // same security (SECURITY DEFINER, derives household from auth.uid()),
+  // one less place to break.
+  const { data: invite, error: inviteError } = await client.rpc('create_household_invite')
+  if (inviteError || !invite) {
+    createError.value = inviteError?.message ?? 'Household created, but the invite code failed'
+    creating.value = false
+    return
   }
+  inviteCode.value = (invite as { code: string }).code
+  phase.value = 'invite'
   creating.value = false
 }
 
@@ -61,15 +68,15 @@ async function handleJoin() {
   }
 
   joining.value = true
-  try {
-    await $fetch('/api/invites/accept', { method: 'POST', body: { code } })
-    await store.fetch()
-    await navigateTo('/')
-  } catch {
+  const { error } = await client.rpc('accept_household_invite', { p_code: code })
+  if (error) {
     joinError.value = "That code isn't valid"
-  } finally {
     joining.value = false
+    return
   }
+  await store.fetch()
+  joining.value = false
+  await navigateTo('/')
 }
 
 function shareInvite() {

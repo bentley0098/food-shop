@@ -112,7 +112,7 @@ Build in this order, each with a story/demo page under a dev-only route:
 - **Invite codes to the specification in SPEC §3** — Crockford base32, 10 characters, CSPRNG, 72-hour expiry, single-use, 10 attempts per user per hour, generic failure message. This is the app's only trust boundary and "short, URL-safe" was not a specification.
 - **`portion_size` seeded from the member count on create and on join, then user-owned.** The stepper in `/settings/household.vue` is the whole feature.
 - **`household_invites` is never exposed to the client** — no select policy at all; joining goes only through the RPC (SPEC §3).
-- Server routes: `server/api/invites/create.post.ts`, `accept.post.ts`.
+- ~~Server routes: `server/api/invites/create.post.ts`, `accept.post.ts`.~~ Removed — `DECISIONS.md` H4: called as direct client RPCs instead, same as `create_household`.
 - Screens: `/onboarding/index.vue` (create/join fork), `/onboarding/join.vue` (code entry, `?code=` prefill with the 400ms confirmation beat), invite display with the dashed coupon block, Copy / Share.
 - `/settings/index.vue` and `/settings/household.vue` (member list, plain-English portion multiplier, regenerate code, leave household behind typed confirmation).
 - Error cases each with their own message: invalid code, expired code, already in a household.

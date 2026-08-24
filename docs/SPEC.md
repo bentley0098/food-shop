@@ -334,7 +334,7 @@ app/
 server/api/
   products/[barcode].get.ts
   shopping-lists/generate.post.ts
-  invites/create.post.ts, accept.post.ts
+  (invites are direct client RPCs, not server routes — DECISIONS.md H4)
 shared/             types/database.ts (generated), constants/aisles.ts
 supabase/           migrations/, seed.sql
 docs/               SPEC.md, DESIGN.md, PLAN.md, INFRASTRUCTURE.md,

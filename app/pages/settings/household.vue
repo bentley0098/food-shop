@@ -45,18 +45,23 @@ async function setPortionSize(next: number) {
 
 const inviteCode = ref('')
 const inviteLoading = ref(false)
+const inviteError = ref('')
 const inviteLink = computed(
   () => `${config.public.siteUrl}/onboarding/join?code=${inviteCode.value}`,
 )
 
 async function regenerateInvite() {
   inviteLoading.value = true
-  try {
-    const invite = await $fetch<{ code: string }>('/api/invites/create', { method: 'POST' })
-    inviteCode.value = invite.code
-  } finally {
-    inviteLoading.value = false
+  inviteError.value = ''
+  // Direct RPC — see onboarding/index.vue's handleCreate for why this
+  // isn't routed through /api/invites/create.
+  const { data: invite, error } = await client.rpc('create_household_invite')
+  if (error || !invite) {
+    inviteError.value = error?.message ?? 'Could not generate a code'
+  } else {
+    inviteCode.value = (invite as { code: string }).code
   }
+  inviteLoading.value = false
 }
 
 function shareInvite() {
@@ -143,6 +148,7 @@ async function leaveHousehold() {
 
       <section class="flex flex-col gap-3">
         <h2 class="u-label px-1">Invite</h2>
+        <p v-if="inviteError" class="px-1 text-body-sm text-clay-600">{{ inviteError }}</p>
         <div
           class="rounded-[var(--radius-md)] border border-dashed border-chalk-300 bg-chalk-100 px-6 py-5 text-center dark:bg-soot-800"
         >
